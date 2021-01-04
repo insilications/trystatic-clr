@@ -6,18 +6,25 @@ import re
 import shlex
 import subprocess
 import sys
-from typing import Any
+import typing
+from typing import Any, TextIO, TypedDict, Dict, List, Tuple, Optional, IO
+from io import TextIOWrapper
 
+os_paths: Optional[List[str]]
 os_paths = None
 
 
-def call(command, logfile=None, check=True, **kwargs):
+def call(command: str, logfile: Any = None, check=True, **kwargs: Dict[str, Any]) -> int:
     """Subprocess.call convenience wrapper."""
-    returncode = 1
+    returncode: int = 1
+    full_args: Dict[str, Any]
+
     full_args = {
         "args": shlex.split(command),
         "universal_newlines": True,
     }
+
+    #toy_story = Movie(name='Toy Story', year=1995)
     full_args.update(kwargs)
 
     if logfile:
@@ -123,13 +130,13 @@ def binary_in_path(binary):
     return False
 
 
-def write_out(filename: str, content: Any, mode="w"):
+def write_out(filename: str, content: Any, mode: str = "w", buffering: int = -1) -> None:
     """File.write convenience wrapper."""
-    with open_auto(filename, mode) as require_f:
+    with open_auto(filename, mode, buffering) as require_f:
         require_f.write(content)
 
 
-def open_auto(*args: Any, **kwargs: Any):
+def open_auto(filename: str, mode: str = "w", buffering: int = -1, **kwargs: Any) -> IO:
     """Open a file with UTF-8 encoding.
 
     Open file with UTF-8 encoding and "surrogate" escape characters that are
@@ -137,7 +144,8 @@ def open_auto(*args: Any, **kwargs: Any):
     """
     # 'encoding' and 'errors' are fourth and fifth positional arguments, so
     # restrict the args tuple to (file, mode, buffering) at most
-    assert len(args) <= 3
+    encoding: str
+    errors: str
     assert 'encoding' not in kwargs
     assert 'errors' not in kwargs
-    return open(*args, encoding="utf-8", errors="surrogateescape", **kwargs)
+    return open(file = filename, mode = mode, buffering = buffering, encoding="utf-8", errors="surrogateescape", **kwargs)
