@@ -6,8 +6,10 @@ import re
 import shlex
 import subprocess
 import sys
+from typing import Any
 
 os_paths = None
+
 
 def call(command, logfile=None, check=True, **kwargs):
     """Subprocess.call convenience wrapper."""
@@ -19,10 +21,11 @@ def call(command, logfile=None, check=True, **kwargs):
     full_args.update(kwargs)
 
     if logfile:
+        # full_args["stdout"]: TextIO
         full_args["stdout"] = open(logfile, "w")
         full_args["stderr"] = subprocess.STDOUT
         returncode = subprocess.call(**full_args)
-        full_args["stdout"].close()
+        # full_args["stdout"].close()
     else:
         returncode = subprocess.call(**full_args)
 
@@ -68,6 +71,7 @@ def _supports_color():
 
 def _print_message(message, level, color=None):
     prefix = level
+    params = ""
     if color and _supports_color():
         # FIXME: use terminfo instead
         if color == 'red':
@@ -119,13 +123,13 @@ def binary_in_path(binary):
     return False
 
 
-def write_out(filename, content, mode="w"):
+def write_out(filename: str, content: Any, mode="w"):
     """File.write convenience wrapper."""
     with open_auto(filename, mode) as require_f:
         require_f.write(content)
 
 
-def open_auto(*args, **kwargs):
+def open_auto(*args: Any, **kwargs: Any):
     """Open a file with UTF-8 encoding.
 
     Open file with UTF-8 encoding and "surrogate" escape characters that are

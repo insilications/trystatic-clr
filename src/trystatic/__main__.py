@@ -1,31 +1,27 @@
 #!/usr/bin/python3
-
+from trystatic import util
+import sys
 import argparse
-import hashlib
 import os
 import re
-import shlex
 import subprocess
-import sys
-import textwrap
 from collections import defaultdict
-
-import trystatic
-from trystatic import util
+sys.path.append("../")
 
 
 def remove_clone_archive(path, clone_path, is_fatal):
     """Remove temporary clone_archive git folder."""
     try:
-        call(f"rm -rf {clone_path}", cwd=path)
+        util.call(f"rm -rf {clone_path}", cwd=path)
     except subprocess.CalledProcessError as err:
         if is_fatal:
-            print_fatal("Unable to remove {}: {}".format(clone_path, err))
+            util.print_fatal("Unable to remove {}: {}".format(clone_path, err))
 
 
 def main():
-    cwd_root = os.getcwd()
-    # print(f"cwd_root: {cwd_root}")
+    # cwd_root = os.getcwd()
+    cwd_root = "/insilications/build/git-clr/clazy-clr/build/"
+    print(f"cwd_root: {cwd_root}")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-t",
@@ -48,7 +44,7 @@ def main():
         "--files",
         action="store",
         dest="files_to_search",
-        default="",
+        default=".cmake,Makefile,.txt",
         help="Files to search in (regex): --files=.cmake,Makefile,.txt,.. (Makefile matches Makefile2 too)",
     )
     args = parser.parse_args()
@@ -86,10 +82,11 @@ def main():
             cwd=targetdir,
         )
     except subprocess.CalledProcessError as err:
-        print_fatal(f"Unable to run rg to search for possible libraries inside {targetdir}: {err}")
+        util.print_fatal(f"Unable to run rg to search for possible libraries inside {targetdir}: {err}")
         sys.exit(1)
 
     output_rg_cmd = process.stdout.rstrip("\n").split()
+    util.write_out("output_rg_cmd.txt", str(output_rg_cmd))
     # print(output_rg_cmd)
     list_libs = list(set(output_rg_cmd))
     # print(f"list_libs: {list_libs}")
@@ -119,24 +116,26 @@ def main():
                     # print(f"libs_dict[{lib}]: {full_match}")
                     break
     for key, value in libs_dict.items():
-        match = r"\-l" f"{re.search(lib_list_re_transform, key).group(0)}"
-        full_name = "".join(value)
-        print(f"{key}: {full_name} - match: {match}")
-        for search in files_to_search_list:
-            sd_cmd = f"sd --flags m '{match}' '{full_name}' $(fd -uu {search})"
-            try:
-                process = subprocess.run(
-                    sd_cmd,
-                    check=True,
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    text=True,
-                    universal_newlines=True,
-                    cwd=targetdir,
-                )
-            except subprocess.CalledProcessError as err:
-                print_fatal(f"cmd: {sd_cmd}")
-                print_fatal(f"Unable to run sd to replace libraries invocations inside {targetdir}: {err}")
+        lib_list_re_transform_result = re.search(lib_list_re_transform, key)
+        if lib_list_re_transform_result is not None:
+            match = r"\-l" f"{lib_list_re_transform_result.group(0)}"
+            full_name = "".join(value)
+            print(f"{key}: {full_name} - match: {match}")
+            for search in files_to_search_list:
+                sd_cmd = f"sd --flags m '{match}' '{full_name}' $(fd -uu {search})"
+                try:
+                    process = subprocess.run(
+                        sd_cmd,
+                        check=True,
+                        shell=True,
+                        stdout=subprocess.PIPE,
+                        text=True,
+                        universal_newlines=True,
+                        cwd=targetdir,
+                    )
+                except subprocess.CalledProcessError as err:
+                    util.print_fatal(f"cmd: {sd_cmd}")
+                    util.print_fatal(f"Unable to run sd to replace libraries invocations inside {targetdir}: {err}")
 
 
 if __name__ == "__main__":

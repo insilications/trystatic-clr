@@ -29,7 +29,6 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Build Tools",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.9",
     ],
     url='https://github.com/insilications/trystatic-clr',
     keywords='trystatic',
