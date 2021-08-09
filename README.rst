@@ -1,0 +1,4 @@
+trystatic-clr
+==================================
+
+trystatic-clr

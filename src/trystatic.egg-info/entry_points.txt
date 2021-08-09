@@ -1,0 +1,3 @@
+[console_scripts]
+trystatic = trystatic.__main__:main
+
